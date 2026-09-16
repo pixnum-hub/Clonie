@@ -157,6 +157,48 @@
   .btn[disabled]{opacity:.45; pointer-events:none;}
   #saveHint{margin:12px 0 0; font-size:12px; color:var(--muted); text-align:center; line-height:1.5;}
 
+  #editor{width:100%; display:none; margin-top:30px; border-top:1px solid var(--border); padding-top:22px;}
+  #editor.show{display:block;}
+  .sectionTitle{font-size:11px; letter-spacing:.5px; font-family:var(--mono); color:var(--muted); margin:0 0 4px;}
+  .sectionSub{font-size:13px; color:var(--muted); margin:0 0 16px; line-height:1.5;}
+  .editWrap{display:grid; grid-template-columns:1fr; gap:18px;}
+  .editCanvasHolder{
+    aspect-ratio:1/1; border:1px solid var(--border); border-radius:var(--radius);
+    background:
+      linear-gradient(45deg,var(--surface2) 25%,transparent 25%,transparent 75%,var(--surface2) 75%),
+      linear-gradient(45deg,var(--surface2) 25%,transparent 25%,transparent 75%,var(--surface2) 75%);
+    background-size:16px 16px; background-position:0 0,8px 8px;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  html[data-theme="hc"] .editCanvasHolder{border-width:2px;}
+  #editCanvas{max-width:100%; max-height:100%; display:block; cursor:default;}
+  #editCanvas.pickable{cursor:crosshair;}
+
+  .sliderRow{display:flex; align-items:center; gap:10px; font-size:13px; margin-bottom:14px;}
+  .sliderRow input[type=range]{flex:1; accent-color:var(--accent);}
+  .sliderRow span:last-child{font-family:var(--mono); font-size:12px; color:var(--muted); width:42px; text-align:right; flex-shrink:0;}
+
+  .btnRow{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .chip{
+    font-size:12.5px; padding:8px 12px; border-radius:var(--radius); border:1px solid var(--border);
+    background:var(--surface2); color:var(--text); cursor:pointer; font-family:var(--sans);
+  }
+  html[data-theme="hc"] .chip{border-width:2px;}
+
+  .toggleRow{display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:600; cursor:pointer; margin-bottom:12px;}
+  .toggleRow input{accent-color:var(--accent); width:18px; height:18px; flex-shrink:0;}
+
+  #bgControls{border-left:2px solid var(--border); padding-left:14px; margin:0 0 16px;}
+  #bgControls[hidden]{display:none;}
+  .swatchRow{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); flex-wrap:wrap; margin-top:2px;}
+  #bgSwatch{width:20px; height:20px; border-radius:50%; border:1px solid var(--border); flex-shrink:0; background:#888;}
+
+  #editHint{margin:14px 0 0; font-size:12px; color:var(--muted); text-align:center; line-height:1.5;}
+
+  @media (min-width:640px){
+    .editWrap{grid-template-columns:1fr 1fr; align-items:start;}
+  }
+
   footer{
     border-top:1px solid var(--border); padding:16px 20px;
     padding-bottom:calc(16px + env(safe-area-inset-bottom));
@@ -181,7 +223,7 @@
 <header>
   <div class="brand">
     <b>Clonie</b>
-    <span>exact raster duplicator</span>
+    <span>Image Duplicator</span>
   </div>
   <div class="headerBtns">
     <button id="installBtn" type="button" hidden>Install app</button>
@@ -237,6 +279,47 @@
     </div>
     <p id="saveHint">If the download doesn't start on its own, long‑press (mobile) or right‑click (desktop) the CLONE image above and choose "Save image".</p>
   </section>
+
+  <section id="editor">
+    <p class="sectionTitle">EDITOR</p>
+    <p class="sectionSub">Tweak the clone, or lift out its background — none of this touches your original file.</p>
+    <div class="editWrap">
+      <div class="editCanvasHolder"><canvas id="editCanvas"></canvas></div>
+      <div class="editControls">
+        <label class="sliderRow"><span>Brightness</span><input type="range" id="rBrightness" min="0" max="200" value="100"><span id="vBrightness">100%</span></label>
+        <label class="sliderRow"><span>Contrast</span><input type="range" id="rContrast" min="0" max="200" value="100"><span id="vContrast">100%</span></label>
+        <label class="sliderRow"><span>Saturation</span><input type="range" id="rSaturation" min="0" max="200" value="100"><span id="vSaturation">100%</span></label>
+
+        <div class="btnRow">
+          <button type="button" class="chip" id="rotateLeft">⟲ Rotate</button>
+          <button type="button" class="chip" id="rotateRight">⟳ Rotate</button>
+          <button type="button" class="chip" id="flipH">⇋ Flip H</button>
+          <button type="button" class="chip" id="flipV">⇕ Flip V</button>
+        </div>
+
+        <label class="toggleRow">
+          <input type="checkbox" id="bgToggle">
+          <span>Remove background</span>
+        </label>
+        <div id="bgControls" hidden>
+          <label class="sliderRow"><span>Tolerance</span><input type="range" id="rTolerance" min="1" max="120" value="34"><span id="vTolerance">34</span></label>
+          <label class="sliderRow"><span>Feather</span><input type="range" id="rFeather" min="0" max="60" value="10"><span id="vFeather">10</span></label>
+          <div class="swatchRow">
+            <span id="bgSwatch"></span>
+            <span>Tap the preview to pick the background color, or</span>
+            <button type="button" class="chip" id="bgAuto">Auto-detect</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="editResetBtn">Reset edits</button>
+          <a class="btn primary" id="editDownloadBtn" download rel="noopener">Download edited (.png)</a>
+          <a class="btn" id="editOpenBtn" target="_blank" rel="noopener" hidden>Open edited full-size</a>
+        </div>
+        <p id="editHint">Background removal keys out flat, solid‑color backgrounds by color similarity — it isn't AI subject detection, so busy or gradient backgrounds may need a higher tolerance. If the download button doesn't start a save on your browser, use "Open edited full-size," then save the image from there.</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -291,6 +374,39 @@
   var mCloneSize = document.getElementById("mCloneSize");
   var mMatch = document.getElementById("mMatch");
 
+  var editorSection = document.getElementById("editor");
+  var editCanvas = document.getElementById("editCanvas");
+  var editCtx = editCanvas.getContext("2d", { willReadFrequently:true });
+  var rBrightness = document.getElementById("rBrightness");
+  var rContrast   = document.getElementById("rContrast");
+  var rSaturation = document.getElementById("rSaturation");
+  var vBrightness = document.getElementById("vBrightness");
+  var vContrast   = document.getElementById("vContrast");
+  var vSaturation = document.getElementById("vSaturation");
+  var rotateLeftBtn  = document.getElementById("rotateLeft");
+  var rotateRightBtn = document.getElementById("rotateRight");
+  var flipHBtn = document.getElementById("flipH");
+  var flipVBtn = document.getElementById("flipV");
+  var bgToggle   = document.getElementById("bgToggle");
+  var bgControls = document.getElementById("bgControls");
+  var rTolerance = document.getElementById("rTolerance");
+  var rFeather   = document.getElementById("rFeather");
+  var vTolerance = document.getElementById("vTolerance");
+  var vFeather   = document.getElementById("vFeather");
+  var bgSwatch   = document.getElementById("bgSwatch");
+  var bgAutoBtn  = document.getElementById("bgAuto");
+  var editResetBtn    = document.getElementById("editResetBtn");
+  var editDownloadBtn = document.getElementById("editDownloadBtn");
+  var editOpenBtn     = document.getElementById("editOpenBtn");
+
+  var naturalW = 0, naturalH = 0;
+  var editDownloadURL = null;
+  var edits = {
+    brightness:100, contrast:100, saturation:100,
+    rotate:0, flipH:false, flipV:false,
+    bgRemove:false, bgColor:null, bgTolerance:34, bgFeather:10
+  };
+
   var srcURL = null, cloneURL = null;
 
   function bytes(n){
@@ -306,11 +422,14 @@
 
   function reset(){
     results.classList.remove("show");
+    editorSection.classList.remove("show");
     setStatus("");
     fileInput.value = "";
     if(srcURL) URL.revokeObjectURL(srcURL);
     if(cloneURL) URL.revokeObjectURL(cloneURL);
-    srcURL = cloneURL = null;
+    if(editDownloadURL) URL.revokeObjectURL(editDownloadURL);
+    srcURL = cloneURL = editDownloadURL = null;
+    resetEditsState();
   }
 
   /* ---------- core clone pipeline ---------- */
@@ -393,6 +512,7 @@
     downloadBtn.href = cloneURL;
     downloadBtn.download = "clonie-" + baseName + ".png";
     openBtn.href = cloneURL;
+    editDownloadBtn.download = "clonie-" + baseName + "-edited.png";
 
     // one deliberate reveal moment
     var bar = document.createElement("div");
@@ -403,7 +523,184 @@
     results.classList.add("show");
     setStatus("Done. Cloned image is ready to download.");
     results.scrollIntoView({ behavior:"smooth", block:"start" });
+
+    naturalW = w; naturalH = h;
+    resetEditsState();
+    editorSection.classList.add("show");
   }
+
+  /* ---------- editor: live preview pipeline ---------- */
+  /* draws the source at the current rotate/flip/filter settings, only (no bg removal) */
+  function drawEditBase(){
+    if(!naturalW || !srcImg.complete){
+      srcImg.addEventListener("load", renderEdit, { once:true });
+      return false;
+    }
+    var rotated = (Math.abs(edits.rotate % 180) === 90);
+    var cw = rotated ? naturalH : naturalW;
+    var ch = rotated ? naturalW : naturalH;
+    editCanvas.width = cw;
+    editCanvas.height = ch;
+
+    editCtx.save();
+    editCtx.clearRect(0, 0, cw, ch);
+    editCtx.translate(cw / 2, ch / 2);
+    editCtx.rotate(edits.rotate * Math.PI / 180);
+    editCtx.scale(edits.flipH ? -1 : 1, edits.flipV ? -1 : 1);
+    editCtx.filter = "brightness(" + edits.brightness + "%) contrast(" + edits.contrast + "%) saturate(" + edits.saturation + "%)";
+    editCtx.drawImage(srcImg, -naturalW / 2, -naturalH / 2, naturalW, naturalH);
+    editCtx.restore();
+    editCtx.filter = "none";
+    return true;
+  }
+
+  /* average a thin border strip of pixels — a robust stand-in for "the background color"
+     on typical solid-backdrop product/portrait shots */
+  function autoSampleBackground(imageData){
+    var d = imageData.data, w = imageData.width, h = imageData.height;
+    var r = 0, g = 0, b = 0, n = 0;
+    function add(x, y){
+      var i = (y * w + x) * 4;
+      r += d[i]; g += d[i+1]; b += d[i+2]; n++;
+    }
+    for(var x = 0; x < w; x += Math.max(1, (w/40)|0)){ add(x, 0); add(x, h-1); }
+    for(var y = 0; y < h; y += Math.max(1, (h/40)|0)){ add(0, y); add(w-1, y); }
+    return n ? [r/n, g/n, b/n] : [255,255,255];
+  }
+
+  function removeBackgroundInPlace(imageData, key, tolerance, feather){
+    var d = imageData.data;
+    var kr = key[0], kg = key[1], kb = key[2];
+    for(var i = 0; i < d.length; i += 4){
+      var dr = d[i] - kr, dg = d[i+1] - kg, db = d[i+2] - kb;
+      var dist = Math.sqrt(dr*dr + dg*dg + db*db);
+      if(dist <= tolerance){
+        d[i+3] = 0;
+      }else if(feather > 0 && dist <= tolerance + feather){
+        var t = (dist - tolerance) / feather;
+        d[i+3] = Math.round(d[i+3] * t);
+      }
+    }
+  }
+
+  var renderPending = false;
+  function renderEdit(){
+    if(!drawEditBase()) return;
+    if(edits.bgRemove){
+      var cw = editCanvas.width, ch = editCanvas.height;
+      var imageData = editCtx.getImageData(0, 0, cw, ch);
+      var key = edits.bgColor || autoSampleBackground(imageData);
+      removeBackgroundInPlace(imageData, key, edits.bgTolerance, edits.bgFeather);
+      editCtx.putImageData(imageData, 0, 0);
+      updateSwatch(key);
+    }
+  }
+
+  function scheduleRender(){
+    if(renderPending) return;
+    renderPending = true;
+    requestAnimationFrame(function(){ renderPending = false; renderEdit(); });
+  }
+
+  function updateSwatch(rgb){
+    bgSwatch.style.background = "rgb(" + Math.round(rgb[0]) + "," + Math.round(rgb[1]) + "," + Math.round(rgb[2]) + ")";
+  }
+
+  function resetEditsState(){
+    edits.brightness = 100; edits.contrast = 100; edits.saturation = 100;
+    edits.rotate = 0; edits.flipH = false; edits.flipV = false;
+    edits.bgRemove = false; edits.bgColor = null; edits.bgTolerance = 34; edits.bgFeather = 10;
+    rBrightness.value = 100; rContrast.value = 100; rSaturation.value = 100;
+    vBrightness.textContent = "100%"; vContrast.textContent = "100%"; vSaturation.textContent = "100%";
+    rTolerance.value = 34; rFeather.value = 10;
+    vTolerance.textContent = "34"; vFeather.textContent = "10";
+    bgToggle.checked = false;
+    bgControls.hidden = true;
+    editCanvas.classList.remove("pickable");
+    editOpenBtn.hidden = true;
+    scheduleRender();
+  }
+
+  rBrightness.addEventListener("input", function(){ edits.brightness = +this.value; vBrightness.textContent = this.value + "%"; scheduleRender(); });
+  rContrast.addEventListener("input",   function(){ edits.contrast   = +this.value; vContrast.textContent   = this.value + "%"; scheduleRender(); });
+  rSaturation.addEventListener("input", function(){ edits.saturation = +this.value; vSaturation.textContent = this.value + "%"; scheduleRender(); });
+  rTolerance.addEventListener("input",  function(){ edits.bgTolerance = +this.value; vTolerance.textContent = this.value; scheduleRender(); });
+  rFeather.addEventListener("input",    function(){ edits.bgFeather   = +this.value; vFeather.textContent   = this.value; scheduleRender(); });
+
+  rotateLeftBtn.addEventListener("click",  function(){ edits.rotate = (edits.rotate - 90 + 360) % 360; scheduleRender(); });
+  rotateRightBtn.addEventListener("click", function(){ edits.rotate = (edits.rotate + 90) % 360; scheduleRender(); });
+  flipHBtn.addEventListener("click", function(){ edits.flipH = !edits.flipH; scheduleRender(); });
+  flipVBtn.addEventListener("click", function(){ edits.flipV = !edits.flipV; scheduleRender(); });
+
+  bgToggle.addEventListener("change", function(){
+    edits.bgRemove = this.checked;
+    bgControls.hidden = !this.checked;
+    editCanvas.classList.toggle("pickable", this.checked);
+    scheduleRender();
+  });
+  bgAutoBtn.addEventListener("click", function(){
+    edits.bgColor = null;
+    scheduleRender();
+  });
+  editCanvas.addEventListener("click", function(e){
+    if(!edits.bgRemove) return;
+    drawEditBase(); // repaint clean pixels (pre-removal) so the sample isn't already transparent
+    var rect = editCanvas.getBoundingClientRect();
+    var scaleX = editCanvas.width / rect.width, scaleY = editCanvas.height / rect.height;
+    var x = Math.max(0, Math.min(editCanvas.width - 1, Math.floor((e.clientX - rect.left) * scaleX)));
+    var y = Math.max(0, Math.min(editCanvas.height - 1, Math.floor((e.clientY - rect.top) * scaleY)));
+    var px = editCtx.getImageData(x, y, 1, 1).data;
+    edits.bgColor = [px[0], px[1], px[2]];
+    renderEdit();
+  });
+
+  editResetBtn.addEventListener("click", resetEditsState);
+
+  editDownloadBtn.addEventListener("click", function(e){
+    var cw = editCanvas.width, ch = editCanvas.height;
+    if(!cw || !ch){ e.preventDefault(); return; }
+
+    if(typeof UPNG !== "undefined" && typeof pako !== "undefined"){
+      // synchronous path: set href before the browser's default anchor action runs,
+      // so the real, already-in-page anchor handles the download itself (most reliable route)
+      try{
+        var imageData = editCtx.getImageData(0, 0, cw, ch);
+        var pngBuffer = UPNG.encode([imageData.data.buffer], cw, ch, 0);
+        var blob = new Blob([pngBuffer], { type: "image/png" });
+        if(editDownloadURL) URL.revokeObjectURL(editDownloadURL);
+        editDownloadURL = URL.createObjectURL(blob);
+        editDownloadBtn.href = editDownloadURL;
+        editOpenBtn.href = editDownloadURL;
+        editOpenBtn.hidden = false;
+        setStatus("Edited image ready.");
+        // no preventDefault — let the browser follow the freshly-set href
+      }catch(err){
+        e.preventDefault();
+        console.error(err);
+        setStatus("Couldn't encode the edited image: " + (err && err.message ? err.message : "unknown error"), true);
+      }
+    }else{
+      // fallback path: canvas.toBlob is async, so we must preventDefault and finish the
+      // download once the blob exists
+      e.preventDefault();
+      setStatus("Encoding edited image…");
+      editCanvas.toBlob(function(blob){
+        if(!blob){ setStatus("Couldn't encode the edited image.", true); return; }
+        if(editDownloadURL) URL.revokeObjectURL(editDownloadURL);
+        editDownloadURL = URL.createObjectURL(blob);
+        editDownloadBtn.href = editDownloadURL;
+        editOpenBtn.href = editDownloadURL;
+        editOpenBtn.hidden = false;
+        var a = document.createElement("a");
+        a.href = editDownloadURL;
+        a.download = editDownloadBtn.download || "clonie-edited.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setStatus("Edited image ready — long‑press \"Open edited full-size\" if the download didn't start.");
+      }, "image/png");
+    }
+  });
 
   /* ---------- input wiring ---------- */
   fileInput.addEventListener("change", function(e){

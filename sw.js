@@ -1,5 +1,5 @@
 // Clonie service worker — app-shell cache, cache-first with network fallback.
-const CACHE_VERSION = "clonie-v2";
+const CACHE_VERSION = "clonie-v5";
 const APP_SHELL = [
   "./index.html",
   "./manifest.json",
